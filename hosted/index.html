@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <style>
+      #main {
+        z-index: 0;
+        left: 10px;
+        top: 10px;
+        box-shadow: 4px 4px 8px rgba(0,0,0,0.5);
+      }
+    </style>
+    <script src="https://npmcdn.com/babel-core@5.8.38/browser.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="./bundle.js" ></script>
+  </head>
+  <body>
+    <canvas id='main'></canvas>
+    <div id="score__board"></div>
+    <p>move with WASD</p>
+    <p>collect circles for points</p>
+    <p>smaller circle = more points</p>
+  </body>
+</html>
