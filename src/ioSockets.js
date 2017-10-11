@@ -55,10 +55,10 @@ const onJoined = (sock, io) => {
 const onMsg = (sock) => {
   const socket = sock;
 
-  socket.on('updatePlayer', (data) => {
+  socket.on('updatePlayer', (user) => {
     const room = gameRooms[socket.room];
 
-    room.updatePlayerPos(data);
+    room.players[user.name].update(user);
   });
 };
 

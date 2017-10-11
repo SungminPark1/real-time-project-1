@@ -4,7 +4,13 @@ let ctx;
 let scoreBoard;
 
 let updated = false;
-let user = { name: `user${Math.floor((Math.random() * 1000) + 1)}` };
+let user = {
+  name: `user${Math.floor((Math.random() * 1000) + 1)}`,
+  pos: {
+    x: 0,
+    y: 0,
+  },
+};
 let players = {};
 let bombs = [];
 
@@ -52,11 +58,19 @@ const drawPlayers = () => {
 
 const drawBombs = () => {
   for (let i = 0; i < bombs.length; i++) {
-    const drawCall = bombs[i];
-    ctx.fillStyle = 'black';
+    const bomb = bombs[i];
+    const fill = `rgba(255, 0, 0, ${bomb.exploding ? 1 : 0.5})`;
+
+    ctx.strokeStyle = 'black';
+    ctx.fillStyle = fill;
     ctx.beginPath();
-    ctx.arc(drawCall.pos.x, drawCall.pos.y, drawCall.radius, 0, Math.PI * 2, false);
+    ctx.arc(bomb.pos.x, bomb.pos.y, bomb.radius, 0, Math.PI * 2, false);
     ctx.fill();
+    ctx.closePath();
+
+    ctx.beginPath();
+    ctx.arc(bomb.pos.x, bomb.pos.y, bomb.explosionRadius, 0, Math.PI * 2, false);
+    ctx.stroke();
     ctx.closePath();
   }
 };

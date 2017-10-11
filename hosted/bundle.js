@@ -6,7 +6,13 @@ var ctx = void 0;
 var scoreBoard = void 0;
 
 var updated = false;
-var user = { name: 'user' + Math.floor(Math.random() * 1000 + 1) };
+var user = {
+  name: 'user' + Math.floor(Math.random() * 1000 + 1),
+  pos: {
+    x: 0,
+    y: 0
+  }
+};
 var players = {};
 var bombs = [];
 
@@ -54,11 +60,19 @@ var drawPlayers = function drawPlayers() {
 
 var drawBombs = function drawBombs() {
   for (var i = 0; i < bombs.length; i++) {
-    var drawCall = bombs[i];
-    ctx.fillStyle = 'black';
+    var bomb = bombs[i];
+    var fill = 'rgba(255, 0, 0, ' + (bomb.exploding ? 1 : 0.5) + ')';
+
+    ctx.strokeStyle = 'black';
+    ctx.fillStyle = fill;
     ctx.beginPath();
-    ctx.arc(drawCall.pos.x, drawCall.pos.y, drawCall.radius, 0, Math.PI * 2, false);
+    ctx.arc(bomb.pos.x, bomb.pos.y, bomb.radius, 0, Math.PI * 2, false);
     ctx.fill();
+    ctx.closePath();
+
+    ctx.beginPath();
+    ctx.arc(bomb.pos.x, bomb.pos.y, bomb.explosionRadius, 0, Math.PI * 2, false);
+    ctx.stroke();
     ctx.closePath();
   }
 };

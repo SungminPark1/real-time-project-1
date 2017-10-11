@@ -1,3 +1,6 @@
+const Player = require('./player.js');
+const Bomb = require('./bomb.js');
+
 function circlesDistance(c1, c2) {
   const dx = c2.x - c1.x;
   const dy = c2.y - c1.y;
@@ -5,62 +8,36 @@ function circlesDistance(c1, c2) {
   return distance;
 }
 
-class createGame {
+class Game {
   constructor(data) {
     this.room = data;
     this.ended = false;
     this.started = false;
     this.players = {};
     this.bombs = [];
+    this.bombTimer = 3;
+    this.currentTimer = this.bombTimer;
     this.time = new Date().getTime();
     this.dt = 0;
   }
 
   addPlayer(user) {
-    this.players[user.name] = {
-      name: user.name,
-      pos: {
-        x: 250,
-        y: 250,
-      },
-      radius: 20,
-      score: 0,
-      color: {
-        r: Math.floor(Math.random() * 256),
-        g: Math.floor(Math.random() * 256),
-        b: Math.floor(Math.random() * 256),
-      },
-    };
+    this.players[user.name] = new Player(user);
   }
 
   deletePlayer(name) {
     delete this.players[name];
   }
 
-  updatePlayerPos(user) {
-    this.players[user.name].pos.x = user.pos.x;
-    this.players[user.name].pos.y = user.pos.y;
-  }
+  createBombs(dt) {
+    this.currentTimer -= dt;
 
-  createBombs() {
-    if (this.bombs.length < 3) {
-      this.bombs.push({
-        pos: {
-          x: Math.floor((Math.random() * 460) + 20),
-          y: Math.floor((Math.random() * 460) + 20),
-        },
-        radius: 5,
-        active: true,
-        points: 15,
-      });
+    if (this.currentTimer < 0 && this.bombs.length <= 15) {
+      this.bombs.push(new Bomb());
+
+      this.bombTimer = Math.max(this.bombTimer * 0.9, 0.1);
+      this.currentTimer = this.bombTimer;
     }
-  }
-
-  updateBomb(bomb) {
-    const updatedBomb = bomb;
-
-    updatedBomb.radius = Math.min(bomb.radius + this.dt, 20);
-    updatedBomb.points = Math.max(bomb.points - this.dt, 1);
   }
 
   filterBombs() {
@@ -69,16 +46,21 @@ class createGame {
 
   checkCollision(user) {
     const player = user;
-    // check player collision with bombs
+
+    // increase score
+    player.score++;
+
+    // check player collision with exploding bombs
     for (let i = 0; i < this.bombs.length; i++) {
       const bomb = this.bombs[i];
 
-      if (circlesDistance(player.pos, bomb.pos) < (player.radius + bomb.radius)) {
-        player.score += bomb.points;
-        bomb.active = false;
-      } else {
-        this.updateBomb(bomb);
+      if (bomb.exploding) {
+        if (circlesDistance(player.pos, bomb.pos) < (player.radius + bomb.explosionRadius)) {
+          player.score = 0;
+        }
       }
+
+      bomb.update(this.dt);
     }
   }
 
@@ -101,9 +83,9 @@ class createGame {
 
     // filter out non active bombs and create new ones
     this.filterBombs();
-    this.createBombs();
+    this.createBombs(this.dt);
   }
 }
 
 
-module.exports = createGame;
+module.exports = Game;
