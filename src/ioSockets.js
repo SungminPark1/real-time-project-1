@@ -6,10 +6,11 @@ const gameRooms = {};
 const updateRoom = (room, io) => {
   gameRooms[room].update();
 
-  const { players, clientBombs } = gameRooms[room];
+  const { players, clientBombs, dt } = gameRooms[room];
   io.sockets.in(room).emit('update', {
     players,
     bombs: clientBombs,
+    dt,
   });
 };
 
@@ -33,6 +34,7 @@ const onJoined = (sock, io) => {
       socket.emit('initData', {
         players: gameRooms.room1.players,
         bombs: gameRooms.room1.bombs,
+        dt: gameRooms.room1.dt,
       });
     });
   } else {

@@ -77,45 +77,24 @@ const drawBombs = () => {
   }
 };
 
-// called when server sends update update user pos?
-const handleUpdate = (data) => {
-  players = data.players;
-  bombs = data.bombs;
-  user = {
-    ...players[user.name],
-    pos: {
-      ...user.pos,
-    },
-  };
-
-  scoreBoard.innerHTML = `<p>Your Score ${players[user.name].score}</p>`;
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawBombs();
-  drawPlayers();
-};
-
-// move update to keydown? to remove request animation frame
-const update = () => {
-  window.requestAnimationFrame(update);
-
+const update = (dt) => {
   updated = false;
 
   // movement check
   if (myKeys.keydown[myKeys.KEYBOARD.KEY_W] === true) {
-    user.pos.y += -2;
+    user.pos.y += -100 * dt;
     updated = true;
   }
   if (myKeys.keydown[myKeys.KEYBOARD.KEY_A] === true) {
-    user.pos.x += -2;
+    user.pos.x += -100 * dt;
     updated = true;
   }
   if (myKeys.keydown[myKeys.KEYBOARD.KEY_S] === true) {
-    user.pos.y += 2;
+    user.pos.y += 100 * dt;
     updated = true;
   }
   if (myKeys.keydown[myKeys.KEYBOARD.KEY_D] === true) {
-    user.pos.x += 2;
+    user.pos.x += 100 * dt;
     updated = true;
   }
 
@@ -142,6 +121,25 @@ const update = () => {
       placeBomb: user.placeBomb,
     });
   }
+};
+
+// called when server sends update update user pos?
+const handleUpdate = (data) => {
+  players = data.players;
+  bombs = data.bombs;
+  user = {
+    ...players[user.name],
+    pos: {
+      ...user.pos,
+    },
+  };
+
+  scoreBoard.innerHTML = `<p>Your Score ${players[user.name].score}</p>`;
+
+  update(data.dt);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBombs();
+  drawPlayers();
 };
 
 const setupSocket = () => {
@@ -181,8 +179,6 @@ const init = () => {
     // console.log(`keyup: ${e.keyCode}`);
     myKeys.keydown[e.keyCode] = false;
   });
-
-  window.requestAnimationFrame(update);
 };
 
 window.onload = init;
