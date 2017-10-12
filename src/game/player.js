@@ -1,3 +1,5 @@
+const utils = require('../utils.js');
+
 class Player {
   constructor(user) {
     this.name = user.name;
@@ -6,16 +8,20 @@ class Player {
       y: 250,
     };
     this.radius = 20;
+    this.health = 3;
     this.score = 0;
     this.color = {
-      r: Math.floor(Math.random() * 256),
-      g: Math.floor(Math.random() * 256),
-      b: Math.floor(Math.random() * 256),
+      r: utils.getRandomInt(256),
+      g: utils.getRandomInt(256),
+      b: utils.getRandomInt(256),
     };
+    this.skillUsed = false;
+    this.cooldown = 0;
   }
 
   update(user) {
     this.pos = user.pos;
+    this.skillUsed = user.skillUsed;
   }
 }
 

@@ -21,6 +21,7 @@ const myKeys = {
     KEY_A: 65,
     KEY_S: 83,
     KEY_D: 68,
+    KEY_SPACE: 49,
   },
   keydown: [],
 };
@@ -79,6 +80,13 @@ const drawBombs = () => {
 const handleUpdate = (data) => {
   players = data.players;
   bombs = data.bombs;
+  user = {
+    ...players[user.name],
+    pos: {
+      ...user.pos,
+    },
+  };
+
   scoreBoard.innerHTML = `<p>Your Score ${players[user.name].score}</p>`;
 
   drawPlayers();
@@ -91,6 +99,7 @@ const update = () => {
 
   updated = false;
 
+  // movement check
   if (myKeys.keydown[myKeys.KEYBOARD.KEY_W] === true) {
     user.pos.y += -2;
     updated = true;
@@ -108,6 +117,14 @@ const update = () => {
     updated = true;
   }
 
+  // skill check
+  if (myKeys.keydown[myKeys.KEYBOARD.KEY_S] === true) {
+    user.skillUsed = true;
+    updated = true;
+  } else {
+    user.skillUsed = false;
+  }
+
   // prevent player from going out of bound
   user.pos.x = clamp(user.pos.x, user.radius, 500 - user.radius);
   user.pos.y = clamp(user.pos.y, user.radius, 500 - user.radius);
@@ -120,6 +137,7 @@ const update = () => {
         x: user.pos.x,
         y: user.pos.y,
       },
+      skillUsed: user.skillUsed,
     });
   }
 };

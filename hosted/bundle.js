@@ -1,5 +1,7 @@
 'use strict';
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 var socket = void 0;
 var canvas = void 0;
 var ctx = void 0;
@@ -22,7 +24,8 @@ var myKeys = {
     KEY_W: 87,
     KEY_A: 65,
     KEY_S: 83,
-    KEY_D: 68
+    KEY_D: 68,
+    KEY_SPACE: 49
   },
   keydown: []
 };
@@ -81,6 +84,10 @@ var drawBombs = function drawBombs() {
 var handleUpdate = function handleUpdate(data) {
   players = data.players;
   bombs = data.bombs;
+  user = _extends({}, players[user.name], {
+    pos: _extends({}, user.pos)
+  });
+
   scoreBoard.innerHTML = '<p>Your Score ' + players[user.name].score + '</p>';
 
   drawPlayers();
@@ -93,6 +100,7 @@ var update = function update() {
 
   updated = false;
 
+  // movement check
   if (myKeys.keydown[myKeys.KEYBOARD.KEY_W] === true) {
     user.pos.y += -2;
     updated = true;
@@ -110,6 +118,14 @@ var update = function update() {
     updated = true;
   }
 
+  // skill check
+  if (myKeys.keydown[myKeys.KEYBOARD.KEY_S] === true) {
+    user.skillUsed = true;
+    updated = true;
+  } else {
+    user.skillUsed = false;
+  }
+
   // prevent player from going out of bound
   user.pos.x = clamp(user.pos.x, user.radius, 500 - user.radius);
   user.pos.y = clamp(user.pos.y, user.radius, 500 - user.radius);
@@ -121,7 +137,8 @@ var update = function update() {
       pos: {
         x: user.pos.x,
         y: user.pos.y
-      }
+      },
+      skillUsed: user.skillUsed
     });
   }
 };

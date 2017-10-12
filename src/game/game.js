@@ -1,12 +1,6 @@
 const Player = require('./player.js');
 const Bomb = require('./bomb.js');
-
-function circlesDistance(c1, c2) {
-  const dx = c2.x - c1.x;
-  const dy = c2.y - c1.y;
-  const distance = Math.sqrt((dx * dx) + (dy * dy));
-  return distance;
-}
+const utils = require('../utils.js');
 
 class Game {
   constructor(data) {
@@ -15,7 +9,7 @@ class Game {
     this.started = false;
     this.players = {};
     this.bombs = [];
-    this.bombTimer = 3;
+    this.bombTimer = 1;
     this.currentTimer = this.bombTimer;
     this.time = new Date().getTime();
     this.dt = 0;
@@ -32,10 +26,10 @@ class Game {
   createBombs(dt) {
     this.currentTimer -= dt;
 
-    if (this.currentTimer < 0 && this.bombs.length <= 15) {
-      this.bombs.push(new Bomb());
+    if (this.currentTimer < 0 && this.bombs.length <= 30) {
+      this.bombs.push(new Bomb(utils.getRandomInt(3)));
 
-      this.bombTimer = Math.max(this.bombTimer * 0.9, 0.1);
+      this.bombTimer = Math.max(this.bombTimer * 0.98, 0.1);
       this.currentTimer = this.bombTimer;
     }
   }
@@ -55,7 +49,7 @@ class Game {
       const bomb = this.bombs[i];
 
       if (bomb.exploding) {
-        if (circlesDistance(player.pos, bomb.pos) < (player.radius + bomb.explosionRadius)) {
+        if (utils.circlesDistance(player.pos, bomb.pos) < (player.radius + bomb.explosionRadius)) {
           player.score = 0;
         }
       }
@@ -78,7 +72,18 @@ class Game {
     for (let i = 0; i < keys.length; i++) {
       const player = this.players[keys[i]];
 
-      this.checkCollision(player);
+      // check skillUsed and cooldown when dead
+      // check collision when alive
+      if (player.health <= 0) {
+        if (player.cooldown <= 0 && player.skillUsed) {
+          player.cooldown = 4;
+          this.bombs.push(new Bomb(2));
+        } else if (player.cooldown > 0) {
+          player.cooldown -= this.dt;
+        }
+      } else {
+        this.checkCollision(player);
+      }
     }
 
     // filter out non active bombs and create new ones
