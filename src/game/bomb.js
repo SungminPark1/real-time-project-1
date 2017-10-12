@@ -13,7 +13,6 @@ class Bomb {
     this.explosionRadius = 40 + (strength * 20);
     this.explosionDur = 1; // 1 sec
     this.active = true;
-    this.update = this.update.bind(this);
   }
 
   // 

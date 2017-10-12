@@ -9,6 +9,7 @@ class Game {
     this.started = false;
     this.players = {};
     this.bombs = [];
+    this.clientBombs = [];
     this.bombTimer = 1;
     this.currentTimer = this.bombTimer;
     this.time = new Date().getTime();
@@ -38,19 +39,22 @@ class Game {
     this.bombs = this.bombs.filter(bomb => bomb.active);
   }
 
-  checkCollision(user) {
-    const player = user;
-
-    // increase score
-    player.score++;
-
-    // check player collision with exploding bombs
+  checkCollision(keys) {
+    // loop through bombs
     for (let i = 0; i < this.bombs.length; i++) {
       const bomb = this.bombs[i];
 
+      // check collision with player if exploding
       if (bomb.exploding) {
-        if (utils.circlesDistance(player.pos, bomb.pos) < (player.radius + bomb.explosionRadius)) {
-          player.score = 0;
+        for (let j = 0; j < keys.length; j++) {
+          const player = this.players[keys[j]];
+
+          if (player.health > 0) {
+            const distance = utils.circlesDistance(player.pos, bomb.pos);
+            if (distance < (player.radius + bomb.explosionRadius)) {
+              player.score = 0;
+            }
+          }
         }
       }
 
@@ -60,35 +64,42 @@ class Game {
 
   update() {
     const now = new Date().getTime();
+    const keys = Object.keys(this.players);
 
     // in seconds
     this.dt = (now - this.time) / 1000;
-
     this.time = now;
 
-    const keys = Object.keys(this.players);
+    // bomb update in check collision
+    this.checkCollision(keys);
 
-    // check each players for collisions
-    for (let i = 0; i < keys.length; i++) {
-      const player = this.players[keys[i]];
+    // check player skill if dead
+    // update players score
+    for (let j = 0; j < keys.length; j++) {
+      const player = this.players[keys[j]];
 
-      // check skillUsed and cooldown when dead
-      // check collision when alive
       if (player.health <= 0) {
-        if (player.cooldown <= 0 && player.skillUsed) {
+        if (player.cooldown <= 0 && player.placeBomb) {
           player.cooldown = 4;
           this.bombs.push(new Bomb(2));
         } else if (player.cooldown > 0) {
           player.cooldown -= this.dt;
         }
       } else {
-        this.checkCollision(player);
+        player.score++;
       }
     }
-
     // filter out non active bombs and create new ones
     this.filterBombs();
     this.createBombs(this.dt);
+
+    // filter bomb data to send only necessary info
+    this.clientBombs = this.bombs.map(bomb => ({
+      pos: bomb.pos,
+      radius: bomb.radius,
+      exploding: bomb.exploding,
+      explosionRadius: bomb.explosionRadius,
+    }));
   }
 }
 

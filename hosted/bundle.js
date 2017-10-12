@@ -36,7 +36,6 @@ function clamp(val, min, max) {
 
 // draw players
 var drawPlayers = function drawPlayers() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
   var keys = Object.keys(players);
 
   for (var i = 0; i < keys.length; i++) {
@@ -66,13 +65,15 @@ var drawBombs = function drawBombs() {
     var bomb = bombs[i];
     var fill = 'rgba(255, 0, 0, ' + (bomb.exploding ? 1 : 0.5) + ')';
 
-    ctx.strokeStyle = 'black';
+    ctx.strokeStyle = 'white';
     ctx.fillStyle = fill;
     ctx.beginPath();
     ctx.arc(bomb.pos.x, bomb.pos.y, bomb.radius, 0, Math.PI * 2, false);
+    ctx.stroke();
     ctx.fill();
     ctx.closePath();
 
+    ctx.strokeStyle = 'black';
     ctx.beginPath();
     ctx.arc(bomb.pos.x, bomb.pos.y, bomb.explosionRadius, 0, Math.PI * 2, false);
     ctx.stroke();
@@ -90,8 +91,9 @@ var handleUpdate = function handleUpdate(data) {
 
   scoreBoard.innerHTML = '<p>Your Score ' + players[user.name].score + '</p>';
 
-  drawPlayers();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawBombs();
+  drawPlayers();
 };
 
 // move update to keydown? to remove request animation frame
@@ -120,10 +122,10 @@ var update = function update() {
 
   // skill check
   if (myKeys.keydown[myKeys.KEYBOARD.KEY_S] === true) {
-    user.skillUsed = true;
+    user.placeBomb = true;
     updated = true;
   } else {
-    user.skillUsed = false;
+    user.placeBomb = false;
   }
 
   // prevent player from going out of bound
@@ -138,7 +140,7 @@ var update = function update() {
         x: user.pos.x,
         y: user.pos.y
       },
-      skillUsed: user.skillUsed
+      placeBomb: user.placeBomb
     });
   }
 };

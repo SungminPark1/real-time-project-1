@@ -6,10 +6,10 @@ const gameRooms = {};
 const updateRoom = (room, io) => {
   gameRooms[room].update();
 
-  const { players, bombs } = gameRooms[room];
+  const { players, clientBombs } = gameRooms[room];
   io.sockets.in(room).emit('update', {
     players,
-    bombs,
+    bombs: clientBombs,
   });
 };
 

@@ -15,13 +15,13 @@ class Player {
       g: utils.getRandomInt(256),
       b: utils.getRandomInt(256),
     };
-    this.skillUsed = false;
+    this.placeBomb = false;
     this.cooldown = 0;
   }
 
   update(user) {
     this.pos = user.pos;
-    this.skillUsed = user.skillUsed;
+    this.placeBomb = user.placeBomb;
   }
 }
 
