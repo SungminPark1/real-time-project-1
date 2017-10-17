@@ -6,11 +6,12 @@ const gameRooms = {};
 const updateRoom = (room, io) => {
   gameRooms[room].update();
 
-  const { players, clientBombs, dt } = gameRooms[room];
+  const { status, dt, players, clientBombs } = gameRooms[room];
   io.sockets.in(room).emit('update', {
+    status,
+    dt,
     players,
     bombs: clientBombs,
-    dt,
   });
 };
 
@@ -61,6 +62,12 @@ const onMsg = (sock) => {
     const room = gameRooms[socket.room];
 
     room.players[user.name].update(user);
+  });
+
+  socket.on('togglePlayerReady', (user) => {
+    const room = gameRooms[socket.room];
+
+    room.players[user.name].toggleReady(user);
   });
 };
 

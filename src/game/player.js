@@ -8,13 +8,14 @@ class Player {
       y: 250,
     };
     this.radius = 20;
-    this.health = 3;
     this.score = 0;
     this.color = {
-      r: utils.getRandomInt(256),
+      r: utils.getRandomInt(151),
       g: utils.getRandomInt(256),
       b: utils.getRandomInt(256),
     };
+    this.ready = false;
+    this.dead = false;
     this.placeBomb = false;
     this.cooldown = 0;
   }
@@ -22,6 +23,22 @@ class Player {
   update(user) {
     this.pos = user.pos;
     this.placeBomb = user.placeBomb;
+  }
+
+  toggleReady(user) {
+    this.ready = user.ready;
+  }
+
+  reset(pos, hardReset) {
+    this.pos = pos;
+    this.ready = false;
+    this.dead = false;
+    this.placeBomb = false;
+    this.cooldown = 0;
+
+    if (hardReset) {
+      this.score = 0;
+    }
   }
 }
 

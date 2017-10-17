@@ -1,11 +1,11 @@
 const utils = require('../utils.js');
 
 class Bomb {
-  constructor(strength) {
+  constructor(strength, pos = { x: null, y: null }) {
     // increase chance for it to be spread out
     this.pos = {
-      x: utils.getRandomInt(19, 1) * 25,
-      y: utils.getRandomInt(19, 1) * 25,
+      x: pos.x || utils.getRandomInt(19, 1) * 25,
+      y: pos.y || utils.getRandomInt(19, 1) * 25,
     };
     this.fuse = 2 + strength; // in sec
     this.radius = 0; // temp indication of when its about to explode

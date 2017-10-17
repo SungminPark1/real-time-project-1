@@ -2,18 +2,23 @@ const Player = require('./player.js');
 const Bomb = require('./bomb.js');
 const utils = require('../utils.js');
 
+const GAME_PREPARING = 'preparing';
+const GAME_STARTED = 'started';
+const GAME_RESTARTING = 'restarting';
+
 class Game {
   constructor(data) {
     this.room = data;
-    this.ended = false;
-    this.started = false;
+    this.status = GAME_PREPARING; // cycle: preparing -> started -> restarting -> (back to started)
     this.players = {};
     this.bombs = [];
     this.clientBombs = [];
-    this.bombTimer = 1;
-    this.currentTimer = this.bombTimer;
+    this.bombTimer = 2;
+    this.currentTimer = this.bombTimer + 1;
     this.time = new Date().getTime();
     this.dt = 0;
+
+    this.restart = 1;
   }
 
   addPlayer(user) {
@@ -49,10 +54,10 @@ class Game {
         for (let j = 0; j < keys.length; j++) {
           const player = this.players[keys[j]];
 
-          if (player.health > 0) {
+          if (!player.dead) {
             const distance = utils.circlesDistance(player.pos, bomb.pos);
             if (distance < (player.radius + bomb.explosionRadius)) {
-              player.score = 0;
+              player.dead = true;
             }
           }
         }
@@ -62,33 +67,51 @@ class Game {
     }
   }
 
-  update() {
-    const now = new Date().getTime();
+  // check if players are ready
+  preparing() {
     const keys = Object.keys(this.players);
+    let readyPlayers = 0;
 
-    // in seconds
-    this.dt = (now - this.time) / 1000;
-    this.time = now;
+    for (let j = 0; j < keys.length; j++) {
+      const player = this.players[keys[j]];
+
+      if (player.ready) {
+        readyPlayers++;
+      }
+    }
+
+    this.status = keys.length === readyPlayers ? GAME_STARTED : this.status;
+  }
+
+  // creates bombs, checks collision, checks if players are dead
+  started() {
+    const keys = Object.keys(this.players);
+    let deadPlayers = 0;
 
     // bomb update in check collision
     this.checkCollision(keys);
 
-    // check player skill if dead
-    // update players score
+    // loop through players
     for (let j = 0; j < keys.length; j++) {
       const player = this.players[keys[j]];
 
-      if (player.health <= 0) {
-        if (player.cooldown <= 0 && player.placeBomb) {
-          player.cooldown = 4;
-          this.bombs.push(new Bomb(2));
-        } else if (player.cooldown > 0) {
-          player.cooldown -= this.dt;
-        }
-      } else {
+      // check if player used a skill
+      if (player.cooldown <= 0 && player.placeBomb) {
+        player.cooldown = 4;
+        this.bombs.push(new Bomb(1, player.pos));
+        player.placeBomb = false;
+      } else if (player.cooldown > 0) {
+        player.cooldown -= this.dt;
+      }
+
+      // increase score if player is not dead
+      if (!player.dead) {
         player.score++;
+      } else {
+        deadPlayers++;
       }
     }
+
     // filter out non active bombs and create new ones
     this.filterBombs();
     this.createBombs(this.dt);
@@ -100,6 +123,51 @@ class Game {
       exploding: bomb.exploding,
       explosionRadius: bomb.explosionRadius,
     }));
+
+    this.status = keys.length === deadPlayers ? GAME_RESTARTING : this.status;
+  }
+
+  // reset player position, bomb timers, and player cooldown
+  restarting(hardReset = false) {
+    if (this.restart === 1) {
+      const keys = Object.keys(this.players);
+
+      for (let j = 0; j < keys.length; j++) {
+        const player = this.players[keys[j]];
+
+        player.reset({ x: 100 + (j * 100), y: 250 }, hardReset);
+      }
+
+      // reset values
+      this.bombTimer = 2;
+      this.currentTimer = this.bombTimer + 1;
+      this.bombs = [];
+      this.restart -= this.dt;
+    } else if (this.restart < 1 && this.restart > 0) {
+      this.restart -= this.dt;
+    } else if (this.restart <= 0) {
+      this.status = GAME_PREPARING; // CHANGE TO PREAPARING
+      this.restart = 1;
+    }
+  }
+
+  // update dt and game based on status
+  update() {
+    const now = new Date().getTime();
+    // in seconds
+    this.dt = (now - this.time) / 1000;
+    this.time = now;
+
+    if (this.status === GAME_PREPARING) {
+      this.preparing();
+    } else if (this.status === GAME_STARTED) {
+      this.started();
+    } else if (this.status === GAME_RESTARTING) {
+      this.restarting();
+    } else {
+      console.log('AHHHHHH');
+      this.restarting(true);
+    }
   }
 }
 
