@@ -146,7 +146,7 @@ class Game {
     } else if (this.restart < 1 && this.restart > 0) {
       this.restart -= this.dt;
     } else if (this.restart <= 0) {
-      this.status = GAME_PREPARING; // CHANGE TO PREAPARING
+      this.status = GAME_PREPARING;
       this.restart = 1;
     }
   }

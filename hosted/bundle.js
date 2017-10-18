@@ -5,21 +5,35 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 var socket = void 0;
 var canvas = void 0;
 var ctx = void 0;
-var scoreBoard = void 0;
 
+// overlay vars
+var username = void 0;
+var roomname = void 0;
+var overlay = void 0;
+var changeRoom = void 0;
+
+// side bar element
+var roomInfo = void 0;
+var roomList = void 0;
+var refreshRooms = void 0;
+var scoreboard = void 0;
+var scoreList = void 0;
+
+// game related vars
+var players = {};
+var bombs = [];
+
+// player related vars
 var updated = false;
 var placeBomb = false;
 var previousKeyDown = false;
-
 var user = {
-  name: 'user' + Math.floor(Math.random() * 1000 + 1),
+  name: 'guest' + Math.floor(Math.random() * 1000 + 1),
   pos: {
     x: 0,
     y: 0
   }
 };
-var players = {};
-var bombs = [];
 
 // keyboard stuff
 var myKeys = {
@@ -44,11 +58,11 @@ var drawPlayers = function drawPlayers() {
   var keys = Object.keys(players);
 
   for (var i = 0; i < keys.length; i++) {
+    var player = players[keys[i]];
+
     // ignores this clients object
     if (keys[i] !== user.name) {
-      var player = players[keys[i]];
-      scoreBoard.innerHTML += '<p>' + player.name + ' Score: ' + player.score + '</p>';
-
+      scoreList.innerHTML += '<p>' + keys[i] + ': ' + player.score + '</p>';
       ctx.fillStyle = 'rgba(' + player.color.r + ', ' + player.color.g + ', ' + player.color.b + ', ' + (player.dead ? 0.25 : 1) + ')';
       ctx.strokeStyle = 'black';
       if (status === 'preparing' && player.ready) {
@@ -88,7 +102,7 @@ var drawPlayers = function drawPlayers() {
 var drawBombs = function drawBombs() {
   for (var i = 0; i < bombs.length; i++) {
     var bomb = bombs[i];
-    var fill = 'rgba(255, 0, 0, ' + (bomb.exploding ? 0.75 : 0.25) + ')';
+    var fill = 'rgba(' + (bomb.exploding ? 255 : 0) + ', 0, 0, ' + (bomb.exploding ? 0.75 : 0.25) + ')';
 
     ctx.strokeStyle = 'white';
     ctx.fillStyle = fill;
@@ -110,7 +124,7 @@ var drawBombs = function drawBombs() {
 var drawText = function drawText(text, x) {
   ctx.fillStyle = 'black';
   ctx.font = '30px Arial';
-  ctx.fillText(text, x, 260);
+  ctx.fillText(text, x, 40);
 };
 
 var update = function update(dt, status) {
@@ -177,7 +191,8 @@ var handleUpdate = function handleUpdate(data) {
   user = _extends({}, players[user.name], {
     pos: _extends({}, user.pos)
   });
-  scoreBoard.innerHTML = '<p>Your Score ' + players[user.name].score + '</p>';
+  var userColor = 'rgb(' + user.color.r + ', ' + user.color.g + ', ' + user.color.b + ')';
+  scoreList.innerHTML = '<p class="bold" style="text-decoration-color:' + userColor + '"; >' + user.name + ': ' + user.score + '</p>';
 
   // handle update based on game status
   if (data.status === 'preparing') {
@@ -187,11 +202,12 @@ var handleUpdate = function handleUpdate(data) {
     update(data.dt, data.status);
     checkReady();
     drawPlayers(data.status);
-    drawText('Waiting for Players to Ready', 100);
+    drawText('Waiting for Players to Ready', 50);
   } else if (data.status === 'started') {
-    // players can move, place bombs and see bombs
+    // reset canvas and scoreboard
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // players can move, place bombs and see bombs
     update(data.dt, data.status);
     drawBombs();
     drawPlayers();
@@ -208,13 +224,6 @@ var handleUpdate = function handleUpdate(data) {
   } else {
     previousKeyDown = false;
   }
-
-  // center block (used to position things)
-  // ctx.fillStyle = 'black';
-  // ctx.beginPath();
-  // ctx.rect(240, 240, 20, 20);
-  // ctx.fill();
-  // ctx.closePath();
 };
 
 var setupSocket = function setupSocket() {
@@ -228,7 +237,28 @@ var setupSocket = function setupSocket() {
     bombs = data.bombs;
     user = data.players[user.name];
 
+    overlay.style.display = 'none';
+    roomInfo.style.display = 'none';
+    scoreboard.style.display = 'block';
     drawPlayers();
+  });
+
+  socket.on('roomList', function (data) {
+    var keys = Object.keys(data);
+    roomList.innerHTML = '';
+
+    for (var i = 0; i < keys.length; i++) {
+      var room = data[keys[i]];
+      var content = '<div class="room__container"><h2>' + keys[i] + '</h2>';
+      content += '<p>Status: ' + room.status + '</p><p>Player(s): ' + room.count + '</p></div>';
+
+      roomList.innerHTML += content;
+    }
+  });
+
+  socket.on('usernameError', function (data) {
+    username.style.border = 'solid 1px red';
+    console.log(data.msg);
   });
 };
 
@@ -240,9 +270,37 @@ var init = function init() {
   canvas.setAttribute('width', 500);
   canvas.setAttribute('height', 500);
 
-  scoreBoard = document.querySelector('#score__board');
+  // overlay
+  username = document.querySelector('#username');
+  roomname = document.querySelector('#roomname');
+  overlay = document.querySelector('.canvas__overlay');
+  changeRoom = document.querySelector('.change__room');
+
+  // sidebar
+  roomInfo = document.querySelector('.room__infos');
+  roomList = document.querySelector('.room__list');
+  refreshRooms = document.querySelector('.refresh__room');
+  scoreboard = document.querySelector('.scoreboard');
+  scoreList = document.querySelector('.score__list');
 
   setupSocket();
+
+  changeRoom.addEventListener('click', function () {
+    if (roomname.value) {
+      user.name = username.value ? username.value : user.name;
+
+      socket.emit('changeRoom', {
+        room: roomname.value,
+        user: user
+      });
+    } else {
+      roomname.style.border = 'solid 1px red';
+    }
+  });
+
+  refreshRooms.addEventListener('click', function () {
+    socket.emit('refreshRoom');
+  });
 
   // event listeners
   window.addEventListener('keydown', function (e) {

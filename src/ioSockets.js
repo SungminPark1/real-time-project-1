@@ -15,48 +15,103 @@ const updateRoom = (room, io) => {
   });
 };
 
-// if no room create one, if there is add player and update player data
+// on connect put player in lobby
+// create room on room change if room doesn't exist
+// else they join the existing room
 const onJoined = (sock, io) => {
   const socket = sock;
+  socket.on('join', (data) => {
+    socket.join('lobby');
+    socket.room = 'lobby';
+    socket.name = data.user.name;
 
-  if (!gameRooms.room1) {
-    socket.on('join', (data) => {
-      socket.join('room1');
-      socket.room = 'room1';
+    // emit back room names and player count
+    const keys = Object.keys(gameRooms);
+    const rooms = {};
+
+    // loop through rooms and extract status and player count
+    for (let i = 0; i < keys.length; i++) {
+      const { status, players } = gameRooms[keys[i]];
+
+      rooms[keys[i]] = {
+        status,
+        count: Object.keys(players).length,
+      };
+    }
+
+    socket.emit('roomList', rooms);
+  });
+
+  socket.on('changeRoom', (data) => {
+    if (!gameRooms[data.room]) {
+      socket.leave('lobby');
+      socket.join(data.room);
+      socket.room = data.room;
       socket.name = data.user.name;
 
-      gameRooms.room1 = new Game('room1');
-      gameRooms.room1.addPlayer(data.user);
+      gameRooms[data.room] = new Game(data.room);
+      gameRooms[data.room].addPlayer(data.user);
 
-      gameRooms.room1.interval = setInterval(() => {
-        updateRoom('room1', io);
+      gameRooms[data.room].interval = setInterval(() => {
+        updateRoom(data.room, io);
       }, 1000 / 60);
 
       socket.emit('initData', {
-        players: gameRooms.room1.players,
-        bombs: gameRooms.room1.bombs,
-        dt: gameRooms.room1.dt,
+        status: gameRooms[data.room].status,
+        dt: gameRooms[data.room].dt,
+        players: gameRooms[data.room].players,
+        bombs: gameRooms[data.room].bombs,
       });
-    });
-  } else {
-    socket.on('join', (data) => {
-      socket.join('room1');
-      socket.room = 'room1';
+    } else {
+      // check if username is already in use
+      const keys = Object.keys(gameRooms[data.room].players);
+
+      for (let i = 0; i < keys.length; i++) {
+        if (data.user.name === keys[i]) {
+          socket.emit('usernameError', { msg: 'Username already in use' });
+          return;
+        }
+      }
+      
+      socket.leave('lobby');
+      socket.join(data.room);
+      socket.room = data.room;
+
       socket.name = data.user.name;
 
-      gameRooms.room1.addPlayer(data.user);
+      gameRooms[data.room].addPlayer(data.user);
 
       socket.emit('initData', {
-        players: gameRooms.room1.players,
-        bombs: gameRooms.room1.bombs,
+        status: gameRooms[data.room].status,
+        dt: gameRooms[data.room].dt,
+        players: gameRooms[data.room].players,
+        bombs: gameRooms[data.room].bombs,
       });
-    });
-  }
+    }
+  });
 };
 
 // update player movement
 const onMsg = (sock) => {
   const socket = sock;
+
+  // refresh room listing in lobby
+  socket.on('refreshRoom', () => {
+    // emit back room names and player count
+    const keys = Object.keys(gameRooms);
+    const rooms = {};
+
+    for (let i = 0; i < keys.length; i++) {
+      const { status, players } = gameRooms[keys[i]];
+
+      rooms[keys[i]] = {
+        status,
+        count: Object.keys(players).length,
+      };
+    }
+
+    socket.emit('roomList', rooms);
+  });
 
   socket.on('updatePlayer', (user) => {
     const room = gameRooms[socket.room];
@@ -76,12 +131,22 @@ const onDisconnect = (sock) => {
 
   socket.on('disconnect', () => {
     // find the disconnected players room and deleted the player
-    if (gameRooms.room1) {
-      gameRooms.room1.deletePlayer(socket.name);
+    if (socket.room !== 'lobby') {
+      const keys = Object.keys(gameRooms); // get the keys of the game rooms
 
-      if (Object.keys(gameRooms.room1.players).length === 0) {
-        clearInterval(gameRooms.room1.interval);
-        delete gameRooms.room1;
+      for (let i = 0; i < keys.length; i++) {
+        const game = gameRooms[keys[i]];
+
+        // check if the game's room matches the socket's room
+        if (game.room === socket.room) {
+          game.deletePlayer(socket.name);
+
+          // deletes room if no players exist in it
+          if (Object.keys(game.players).length === 0) {
+            clearInterval(game.interval);
+            delete gameRooms[keys[i]];
+          }
+        }
       }
     }
   });

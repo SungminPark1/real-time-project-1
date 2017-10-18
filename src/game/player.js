@@ -4,8 +4,8 @@ class Player {
   constructor(user) {
     this.name = user.name;
     this.pos = {
-      x: 250,
-      y: 250,
+      x: 200 + utils.getRandomInt(100, 1),
+      y: 200 + utils.getRandomInt(100, 1),
     };
     this.radius = 20;
     this.score = 0;
