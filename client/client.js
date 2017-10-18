@@ -139,8 +139,8 @@ const handleUpdate = (data) => {
 
     // players can move, place bombs and see bombs
     update(data.dt, data.status);
-    drawBombs();
     drawPlayers();
+    drawBombs();
   } else if (data.status === 'restarting') {
     // freeze screen and loop back to start
     user.pos = {
