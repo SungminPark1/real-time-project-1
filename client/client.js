@@ -1,19 +1,24 @@
+/* eslint-disable no-unused-vars, no-global-assign */
+
+// from index.js script
+/* global io */
+
+// variables from setup.js
+/* global scoreList */
+
+// functions from draw.js
+/* global drawPlayers */
+/* global drawBombs */
+/* global drawText */
+
+// functions from setup.js
+/* global setupSocket */
+/* global setupOverlay */
+/* global setupSidebar */
+
 let socket;
 let canvas;
 let ctx;
-
-// overlay vars
-let username;
-let roomname;
-let overlay;
-let changeRoom;
-
-// side bar element
-let roomInfo;
-let roomList;
-let refreshRooms;
-let scoreboard;
-let scoreList;
 
 // game related vars
 let players = {};
@@ -46,80 +51,6 @@ const myKeys = {
 function clamp(val, min, max) {
   return Math.max(min, Math.min(max, val));
 }
-
-// draw players
-const drawPlayers = (status = 'started') => {
-  const keys = Object.keys(players);
-
-  for (let i = 0; i < keys.length; i++) {
-    const player = players[keys[i]];
-
-    // ignores this clients object
-    if (keys[i] !== user.name) {
-      scoreList.innerHTML += `<p>${keys[i]}: ${player.score}</p>`;
-      ctx.fillStyle = `rgba(${player.color.r}, ${player.color.g}, ${player.color.b}, ${player.dead ? 0.25 : 1})`;
-      ctx.strokeStyle = 'black';
-      if (status === 'preparing' && player.ready) {
-        ctx.save();
-        ctx.shadowColor = '#00FF00';
-        ctx.shadowBlur = 40;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-      }
-      ctx.beginPath();
-      ctx.arc(player.pos.x, player.pos.y, player.radius, 0, Math.PI * 2, false);
-      ctx.fill();
-      ctx.stroke();
-      ctx.closePath();
-      ctx.restore();
-    }
-  }
-
-  // draw clients player
-  ctx.fillStyle = `rgba(${user.color.r},${user.color.g},${user.color.b}, ${user.dead ? 0.25 : 1})`;
-  if (status === 'preparing' && user.ready) {
-    ctx.save();
-    ctx.shadowColor = '#00FF00';
-    ctx.shadowBlur = 40;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-  }
-  ctx.beginPath();
-  ctx.arc(user.pos.x, user.pos.y, user.radius, 0, Math.PI * 2, false);
-  ctx.fill();
-  ctx.stroke();
-  ctx.closePath();
-  ctx.restore();
-};
-
-// draw bombs
-const drawBombs = () => {
-  for (let i = 0; i < bombs.length; i++) {
-    const bomb = bombs[i];
-    const fill = `rgba(${bomb.exploding ? 255 : 0}, 0, 0, ${bomb.exploding ? 0.75 : 0.25})`;
-
-    ctx.strokeStyle = 'white';
-    ctx.fillStyle = fill;
-    ctx.beginPath();
-    ctx.arc(bomb.pos.x, bomb.pos.y, bomb.radius, 0, Math.PI * 2, false);
-    ctx.stroke();
-    ctx.fill();
-    ctx.closePath();
-
-    ctx.strokeStyle = 'black';
-    ctx.beginPath();
-    ctx.arc(bomb.pos.x, bomb.pos.y, bomb.explosionRadius, 0, Math.PI * 2, false);
-    ctx.stroke();
-    ctx.closePath();
-  }
-};
-
-// draw text
-const drawText = (text, x) => {
-  ctx.fillStyle = 'black';
-  ctx.font = '30px Arial';
-  ctx.fillText(text, x, 40);
-};
 
 const update = (dt, status) => {
   updated = false;
@@ -179,6 +110,7 @@ const checkReady = () => {
 };
 
 // called when server sends update update user pos?
+// handled called in setup.js
 const handleUpdate = (data) => {
   players = data.players;
   bombs = data.bombs;
@@ -225,42 +157,6 @@ const handleUpdate = (data) => {
   }
 };
 
-const setupSocket = () => {
-  socket.emit('join', { user });
-
-  socket.on('update', handleUpdate);
-
-  // get other clients data from server
-  socket.on('initData', (data) => {
-    players = data.players;
-    bombs = data.bombs;
-    user = data.players[user.name];
-
-    overlay.style.display = 'none';
-    roomInfo.style.display = 'none';
-    scoreboard.style.display = 'block';
-    drawPlayers();
-  });
-
-  socket.on('roomList', (data) => {
-    const keys = Object.keys(data);
-    roomList.innerHTML = '';
-
-    for (let i = 0; i < keys.length; i++) {
-      const room = data[keys[i]];
-      let content = `<div class="room__container"><h2>${keys[i]}</h2>`;
-      content += `<p>Status: ${room.status}</p><p>Player(s): ${room.count}</p></div>`;
-
-      roomList.innerHTML += content;
-    }
-  });
-
-  socket.on('usernameError', (data) => {
-    username.style.border = 'solid 1px red';
-    console.log(data.msg);
-  });
-};
-
 const init = () => {
   socket = io.connect();
   canvas = document.querySelector('#main');
@@ -269,37 +165,9 @@ const init = () => {
   canvas.setAttribute('width', 500);
   canvas.setAttribute('height', 500);
 
-  // overlay
-  username = document.querySelector('#username');
-  roomname = document.querySelector('#roomname');
-  overlay = document.querySelector('.canvas__overlay');
-  changeRoom = document.querySelector('.change__room');
-
-  // sidebar
-  roomInfo = document.querySelector('.room__infos');
-  roomList = document.querySelector('.room__list');
-  refreshRooms = document.querySelector('.refresh__room');
-  scoreboard = document.querySelector('.scoreboard');
-  scoreList = document.querySelector('.score__list');
-
   setupSocket();
-
-  changeRoom.addEventListener('click', () => {
-    if (roomname.value) {
-      user.name = username.value ? username.value : user.name;
-
-      socket.emit('changeRoom', {
-        room: roomname.value,
-        user,
-      });
-    } else {
-      roomname.style.border = 'solid 1px red';
-    }
-  });
-
-  refreshRooms.addEventListener('click', () => {
-    socket.emit('refreshRoom');
-  });
+  setupOverlay();
+  setupSidebar();
 
   // event listeners
   window.addEventListener('keydown', (e) => {
