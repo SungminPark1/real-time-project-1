@@ -1,31 +1,23 @@
 const http = require('http');
-const fs = require('fs');
+const path = require('path');
+const express = require('express');
 const socketio = require('socket.io');
 const ioSockets = require('./ioSockets.js');
 
-const port = process.env.PORT || process.env.NODE_PORT || 3000;
+const PORT = process.env.PORT || process.env.NODE_PORT || 3000;
 
-const onRequest = (req, res) => {
-  if (req.url === '/bundle.js') {
-    fs.readFile(`${__dirname}/../hosted/bundle.js`, (err, data) => {
-      res.writeHead(200, { 'Content-Type': 'application/javascript' });
-      res.write(data);
-      res.end();
-    });
-  } else {
-    fs.readFile(`${__dirname}/../hosted/index.html`, (err, data) => {
-      res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end(data);
-    });
-  }
-};
+const app = express();
 
-const app = http.createServer(onRequest);
-app.listen(port);
-console.log(`Listening on 127.0.0.1: ${port}`);
+app.use('/assets', express.static(path.resolve(`${__dirname}/../hosted/`)));
+
+app.get('/', (req, res) => {
+  res.sendFile(path.resolve(`${__dirname}/../hosted/index.html`));
+});
+
+const server = http.createServer(app);
 
 // pass in the http server into socketio and grab the websocket server as io
-const io = socketio(app);
+const io = socketio(server);
 
 io.sockets.on('connection', (socket) => {
   ioSockets.onJoined(socket, io);
@@ -33,4 +25,9 @@ io.sockets.on('connection', (socket) => {
   ioSockets.onDisconnect(socket, io);
 });
 
-console.log('websocket server started');
+server.listen(PORT, (err) => {
+  if (err) {
+    throw err;
+  }
+  console.log(`Listening on port ${PORT}`);
+});

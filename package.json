@@ -26,7 +26,8 @@
   },
   "homepage": "https://github.com/SungminPark1/real-time-project-1#readme",
   "dependencies": {
-    "socket.io": "^2.0.3"
+    "socket.io": "^2.0.3",
+    "express": "^4.16.2"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
