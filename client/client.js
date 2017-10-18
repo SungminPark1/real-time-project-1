@@ -131,7 +131,8 @@ const handleUpdate = (data) => {
     update(data.dt, data.status);
     checkReady();
     drawPlayers(data.status);
-    drawText('Waiting for Players to Ready', 50);
+    drawText('Waiting for Players to Ready', 60);
+    drawText('(spacebar to ready)', 170, 70, 20);
   } else if (data.status === 'started') {
     // reset canvas and scoreboard
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -172,11 +173,15 @@ const init = () => {
   // event listeners
   window.addEventListener('keydown', (e) => {
     // console.log(`keydown: ${e.keyCode}`);
+    // prevent spaces in name and scroll down function
+    if (e.keyCode === myKeys.KEYBOARD.KEY_SPACE) e.preventDefault();
     myKeys.keydown[e.keyCode] = true;
   });
 
   window.addEventListener('keyup', (e) => {
     // console.log(`keyup: ${e.keyCode}`);
+    // prevent spaces in name and scroll down function
+    if (e.keyCode === myKeys.KEYBOARD.KEY_SPACE) e.preventDefault();
     myKeys.keydown[e.keyCode] = false;
   });
 };

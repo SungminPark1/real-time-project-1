@@ -135,7 +135,14 @@ class Game {
       for (let j = 0; j < keys.length; j++) {
         const player = this.players[keys[j]];
 
-        player.reset({ x: 100 + (j * 100), y: 250 }, hardReset);
+        let x = 250;
+
+        // set players equally apart
+        if (keys.length > 1) {
+          x = Math.round((j / (keys.length - 1)) * 400) + 50;
+        }
+
+        player.reset({ x, y: 250 }, hardReset);
       }
 
       // reset values

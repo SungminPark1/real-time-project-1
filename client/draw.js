@@ -81,8 +81,8 @@ const drawBombs = () => {
 };
 
 // draw text
-const drawText = (text, x) => {
+const drawText = (text, x, y = 40, size = 30) => {
   ctx.fillStyle = 'black';
-  ctx.font = '30px Arial';
-  ctx.fillText(text, x, 40);
+  ctx.font = `${size}px Arial`;
+  ctx.fillText(text, x, y);
 };

@@ -132,7 +132,8 @@ var handleUpdate = function handleUpdate(data) {
     update(data.dt, data.status);
     checkReady();
     drawPlayers(data.status);
-    drawText('Waiting for Players to Ready', 50);
+    drawText('Waiting for Players to Ready', 60);
+    drawText('(spacebar to ready)', 170, 70, 20);
   } else if (data.status === 'started') {
     // reset canvas and scoreboard
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -171,11 +172,15 @@ var init = function init() {
   // event listeners
   window.addEventListener('keydown', function (e) {
     // console.log(`keydown: ${e.keyCode}`);
+    // prevent spaces in name and scroll down function
+    if (e.keyCode === myKeys.KEYBOARD.KEY_SPACE) e.preventDefault();
     myKeys.keydown[e.keyCode] = true;
   });
 
   window.addEventListener('keyup', function (e) {
     // console.log(`keyup: ${e.keyCode}`);
+    // prevent spaces in name and scroll down function
+    if (e.keyCode === myKeys.KEYBOARD.KEY_SPACE) e.preventDefault();
     myKeys.keydown[e.keyCode] = false;
   });
 };
@@ -272,9 +277,12 @@ var drawBombs = function drawBombs() {
 
 // draw text
 var drawText = function drawText(text, x) {
+  var y = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 40;
+  var size = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 30;
+
   ctx.fillStyle = 'black';
-  ctx.font = '30px Arial';
-  ctx.fillText(text, x, 40);
+  ctx.font = size + 'px Arial';
+  ctx.fillText(text, x, y);
 };
 'use strict';
 
