@@ -52,9 +52,9 @@ var myKeys = {
   keydown: []
 };
 
-function clamp(val, min, max) {
+var clamp = function clamp(val, min, max) {
   return Math.max(min, Math.min(max, val));
-}
+};
 
 var update = function update(dt, status) {
   updated = false;

@@ -48,9 +48,7 @@ const myKeys = {
   keydown: [],
 };
 
-function clamp(val, min, max) {
-  return Math.max(min, Math.min(max, val));
-}
+const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
 
 const update = (dt, status) => {
   updated = false;
